@@ -1,11 +1,8 @@
 import configparser
 import html
-import sys
 import threading
 from contextlib import contextmanager
 from logging.handlers import TimedRotatingFileHandler
-import traceback
-from time import sleep
 from flask import (
     Flask,
     request,
@@ -151,7 +148,7 @@ def refresh_caches():
         global schedule_cache_dict
         wrapcache.flush()
         schedule_cache_dict = {}
-        sleep(24 * 60 * 60)
+        time.sleep(24 * 60 * 60)
 
 
 @contextmanager
@@ -335,7 +332,7 @@ def schedule_loop():
                 # sleep(.1)
         except Exception as e:
             logging.exception(e)
-            sleep(1)
+            time.sleep(1)
             logging.error('parse channel_cache xml failed. Try again after 1 second')
             schedule_loop()
         else:
