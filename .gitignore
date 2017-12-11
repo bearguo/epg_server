@@ -1,0 +1,7 @@
+*
+!.gitignore
+!epg.py
+!*.conf
+!README.md
+!epg
+!requirements.txt
