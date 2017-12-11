@@ -329,7 +329,7 @@ def schedule_loop():
                             schedule_cache_dict[id] = schedule_xml
                 else:
                     raise Exception('Failed to get mutex!')
-                # sleep(.1)
+                time.sleep(.1)
         except Exception as e:
             logging.exception(e)
             time.sleep(1)
