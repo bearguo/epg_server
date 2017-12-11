@@ -210,7 +210,7 @@ def fetch_schedule_xml(channel_id):
     }
     url = '%s/%s?%s' % (THIRD_PARTY_EPG_URL_BASE, 'schedule', urlencode(params))
     try:
-        web_page = urlopen(url, timeout=5).read()
+        web_page = urlopen(url, timeout=20).read()
     except Exception as e:
         logging.error('Fetch schedule xml failed. %s' % url)
         logging.exception(e)
