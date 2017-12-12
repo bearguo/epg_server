@@ -213,7 +213,7 @@ def fetch_schedule_xml(channel_id):
     }
     url = '%s/%s?%s' % (THIRD_PARTY_EPG_URL_BASE, 'schedule', urlencode(params))
     try:
-        web_page = urlopen(url, timeout=10).read()
+        web_page = urlopen(url, timeout=20).read()
     except Exception as e:
         logging.error('Fetch schedule xml failed. %s' % url)
         logging.exception(e)
@@ -333,7 +333,7 @@ def schedule_loop():
                             schedule_cache_dict[id] = schedule_xml
                 else:
                     raise Exception('Failed to get mutex!')
-                # sleep(.1)
+                time.sleep(.1)
         except Exception as e:
             logging.exception(e)
             time.sleep(1)
