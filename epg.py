@@ -16,6 +16,7 @@ import wrapcache
 from pathlib import Path
 import os, sys
 from xml.etree import ElementTree as et
+from retry import retry
 import time
 
 
@@ -168,6 +169,8 @@ def lock_decorator(func):
         return result
     return wrapper
 
+
+@retry(Exception, tries=5, delay=1, backoff=2)
 def fetch_schedule_xml(channel_id):
     """
     获取某个频道的最近2周节目信息
@@ -210,14 +213,14 @@ def fetch_schedule_xml(channel_id):
     }
     url = '%s/%s?%s' % (THIRD_PARTY_EPG_URL_BASE, 'schedule', urlencode(params))
     try:
-        web_page = urlopen(url, timeout=5).read()
+        web_page = urlopen(url, timeout=10).read()
     except Exception as e:
         logging.error('Fetch schedule xml failed. %s' % url)
         logging.exception(e)
         return None
     return web_page
 
-
+@retry(Exception, tries=5, delay=1, backoff=2)
 def fetch_channel_xml():
     """
     获取所有频道列表
@@ -272,6 +275,7 @@ def fetch_channel_xml():
     return web_page
 
 
+@retry(Exception, tries=5, delay=1, backoff=2)
 def fetch_update_xml(next_time):
 #     return """
 # <document>
@@ -410,7 +414,7 @@ if __name__ == '__main__':
     # t.setDaemon(True) # Kill the thread t when the main process stopped.
     # t.start()
     logging.info('start running flask')
-    app.run(host='0.0.0.0', port=int(PORT), debug=True)
+    app.run(host='0.0.0.0', port=int(PORT), debug=False)
     logging.info('EPG Master Server Stopped!')
 
 
