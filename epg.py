@@ -301,7 +301,7 @@ def fetch_update_xml(next_time):
     }
     url = '%s/%s?%s' % (THIRD_PARTY_EPG_URL_BASE, 'update', urlencode(params))
     try:
-        web_page = urlopen(url, timeout=5).read()
+        web_page = urlopen(url, timeout=20).read()
     except Exception as e:
         logging.error('Fetch update xml failed. %s' % url)
         logging.exception(e)
@@ -397,7 +397,7 @@ def update_loop():
     except Exception as e:
         logging.exception(e)
     finally:
-        t = threading.Timer(10,update_loop)
+        t = threading.Timer(5*60,update_loop)
         t.setDaemon(True)
         t.start()
 
