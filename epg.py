@@ -217,10 +217,11 @@ def fetch_schedule_xml(channel_id):
     except Exception as e:
         logging.error('Fetch schedule xml failed. %s' % url)
         logging.exception(e)
+        raise Exception('Error fetching schedule url')
         return None
     return web_page
 
-@retry(Exception, tries=5, delay=1, backoff=2)
+@retry(Exception, delay=1, backoff=2)
 def fetch_channel_xml():
     """
     获取所有频道列表
@@ -262,15 +263,17 @@ def fetch_channel_xml():
     #         </name>
     #     </channel>
     # </document>"""
+    print('Enter fetch channel')
     params = {
         'secret': SECRET_KEY,
     }
     url = '%s/%s?%s' % (THIRD_PARTY_EPG_URL_BASE, 'channel', urlencode(params))
     try:
-        web_page = urlopen(url, timeout=5).read()
+        web_page = urlopen(url, timeout=20).read()
     except Exception as e:
         logging.error('Fetch channel xml failed. %s' % url)
         logging.exception(e)
+        raise Exception('Error fetch channel xml')
         return None
     return web_page
 
@@ -305,6 +308,7 @@ def fetch_update_xml(next_time):
     except Exception as e:
         logging.error('Fetch update xml failed. %s' % url)
         logging.exception(e)
+        raise Exception('Error fetch update xml')
         return None
     return web_page
 
@@ -320,8 +324,8 @@ def channel_loop():
 def schedule_loop():
     global schedule_cache_dict, cur_time
     if channel_cache is not None:
-        try:
-            with acquire_timeout(mutex, 3) as acquired:
+        with acquire_timeout(mutex, 3) as acquired:
+            try:
                 if acquired:
                     channel_root = et.fromstring(channel_cache)
                     cur_time = time.strftime('%Y%m%d%H%M%S', time.localtime())
@@ -334,15 +338,16 @@ def schedule_loop():
                 else:
                     raise Exception('Failed to get mutex!')
                 time.sleep(.1)
-        except Exception as e:
-            logging.exception(e)
-            time.sleep(1)
-            logging.error('parse channel_cache xml failed. Try again after 1 second')
-            schedule_loop()
-        else:
-            t = threading.Timer(12*60*60, schedule_loop)
-            t.setDaemon(True)
-            t.start()
+            except Exception as e:
+                mutex.release()
+                logging.exception(e)
+                logging.error('parse channel_cache xml failed. Try again after 1 second')
+                time.sleep(1)
+                schedule_loop()
+            else:
+                t = threading.Timer(12*60*60, schedule_loop)
+                t.setDaemon(True)
+                t.start()
 
 
 @lock_decorator
