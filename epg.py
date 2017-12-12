@@ -160,7 +160,7 @@ def acquire_timeout(lock, timeout):
         lock.release()
 
 
-def lock_decorator(func):
+def cache_lock(func):
     def wrapper(*args, **kwargs):
         result = None
         with acquire_timeout(mutex, timeout=3) as acquired:
@@ -309,16 +309,22 @@ def fetch_update_xml(next_time):
         logging.error('Fetch update xml failed. %s' % url)
         logging.exception(e)
         raise Exception('Error fetch update xml')
-        return None
     return web_page
 
 
 def channel_loop():
     global channel_cache
-    channel_cache = fetch_channel_xml()
-    channel_timer = threading.Timer(12 * 60 * 60, channel_loop)
-    channel_timer.setDaemon(True)
-    channel_timer.start()
+    try:
+        channel_cache = fetch_channel_xml()
+    except Exception as e:
+        logging.exception(e)
+        logging.info('fetch channel xml failed. Retry after 10 seconds')
+        time.sleep(10)
+        channel_loop()
+    else:
+        channel_timer = threading.Timer(12 * 60 * 60, channel_loop)
+        channel_timer.setDaemon(True)
+        channel_timer.start()
 
 
 def schedule_loop():
@@ -350,7 +356,7 @@ def schedule_loop():
                 t.start()
 
 
-@lock_decorator
+@cache_lock
 def update_xml_process(update_xml: et.Element):
     if update_xml.find('schedules') is None:return
     for schedule in update_xml.find('schedules').iter('schedule'):
