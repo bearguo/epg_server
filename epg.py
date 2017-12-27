@@ -348,20 +348,22 @@ def filter_cross_midnight_program(schedule_xml):
     # 2. 判断是否在该节目的第二天存在起始时间为00:00且节目名称相同的节目
     cross_program_clean = []
     for program in cross_program_night:
-        program_date = parent_map[program].get('date')
-        program_date = datetime.datetime.strptime(program_date, '%Y-%m-%d')
-        next_date = program_date + datetime.timedelta(days=1)
-        next_date = next_date.strftime('%Y-%m-%d')
-        next_day_programs = schedule_xml.find(".//schedule[@date='%s']" % next_date).iter('event')
-        next_day_programs = [next_program for next_program in next_day_programs if (
-            next_program.find('start_time').text == '00:00'
-            and next_program.find('title').text == program.find('title').text
-        )]
-        # 3. 修改该结束时间为00:00的节目的结束时间为第二天节目的结束时间,删除第二天的该节目
-        if next_day_programs:
-            program.find('end_time').text = next_day_programs[0].find('end_time').text
-            parent_map[next_day_programs[0]].remove(next_day_programs[0])
-
+        try:
+            program_date = parent_map[program].get('date')
+            program_date = datetime.datetime.strptime(program_date, '%Y-%m-%d')
+            next_date = program_date + datetime.timedelta(days=1)
+            next_date = next_date.strftime('%Y-%m-%d')
+            next_day_programs = schedule_xml.find(".//schedule[@date='%s']" % next_date).iter('event')
+            next_day_programs = [next_program for next_program in next_day_programs if (
+                next_program.find('start_time').text == '00:00'
+                and next_program.find('title').text == program.find('title').text
+            )]
+            # 3. 修改该结束时间为00:00的节目的结束时间为第二天节目的结束时间,删除第二天的该节目
+            if next_day_programs:
+                program.find('end_time').text = next_day_programs[0].find('end_time').text
+                parent_map[next_day_programs[0]].remove(next_day_programs[0])
+        except:
+            continue
     # 4. 将element tree转化为字符串返回
     return et.tostring(schedule_xml)
 
