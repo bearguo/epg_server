@@ -3,6 +3,8 @@ import html
 import threading
 from contextlib import contextmanager
 from logging.handlers import TimedRotatingFileHandler
+
+import datetime
 from flask import (
     Flask,
     request,
@@ -18,7 +20,6 @@ import os, sys
 from xml.etree import ElementTree as et
 from retry import retry
 import time
-
 
 if getattr(sys, 'frozen', False):
     cur_path = os.path.dirname(sys.executable)
@@ -53,6 +54,8 @@ schedule_cache_dict = {}
 channel_cache = None
 mutex = threading.Lock()
 global cur_time
+
+
 # debug_counter = 0
 
 
@@ -167,6 +170,7 @@ def cache_lock(func):
             if acquired:
                 result = func(*args, **kwargs)
         return result
+
     return wrapper
 
 
@@ -206,7 +210,7 @@ def fetch_schedule_xml(channel_id):
     #     </event>
     # </schedule>
     # </document>"""
-    print('Enter channel:%s'%channel_id)
+    print('Enter channel:%s' % channel_id)
     params = {
         'secret': SECRET_KEY,
         'id': channel_id
@@ -220,6 +224,7 @@ def fetch_schedule_xml(channel_id):
         raise Exception('Error fetching schedule url')
         return None
     return web_page
+
 
 @retry(Exception, delay=1, backoff=2)
 def fetch_channel_xml():
@@ -280,24 +285,24 @@ def fetch_channel_xml():
 
 @retry(Exception, tries=5, delay=1, backoff=2)
 def fetch_update_xml(next_time):
-#     return """
-# <document>
-# <schedules>
-# <schedule channel_id="CCTV1" epg_code="CCTV1" date="">
-# <event id="819390800" op="del"/>
-# </schedule>
-# <schedule channel_id="CCTV1" epg_code="CCTV1" date="2017-12-07">
-# <event id="819448190" op="add">
-# <start_time>18:30</start_time>
-# <end_time>18:58</end_time>
-# <title>
-# <![CDATA[ 安徽新闻联播 ]]>
-# </title>
-# </event>
-# </schedule>
-# </schedules>
-# </document>
-# """
+    #     return """
+    # <document>
+    # <schedules>
+    # <schedule channel_id="CCTV1" epg_code="CCTV1" date="">
+    # <event id="819390800" op="del"/>
+    # </schedule>
+    # <schedule channel_id="CCTV1" epg_code="CCTV1" date="2017-12-07">
+    # <event id="819448190" op="add">
+    # <start_time>18:30</start_time>
+    # <end_time>18:58</end_time>
+    # <title>
+    # <![CDATA[ 安徽新闻联播 ]]>
+    # </title>
+    # </event>
+    # </schedule>
+    # </schedules>
+    # </document>
+    # """
     params = {
         'secret': SECRET_KEY,
         'time': next_time
@@ -327,6 +332,39 @@ def channel_loop():
         channel_timer.start()
 
 
+def end_time_with_0(program_list):
+    return program_list.find('end_time').text == '00:00'
+
+
+def filter_cross_midnight_program(schedule_xml):
+    """将跨午夜相同节目被差分成两个节目的部分合并为一个节目"""
+    schedule_xml = et.fromstring(schedule_xml)
+
+    # 1. 找出所有结束时间为00:00的节目，记录其所属日期
+    parent_map = dict((c, p) for p in schedule_xml.getiterator() for c in p)
+    cross_program = schedule_xml.findall(".//event")
+    cross_program_night = filter(end_time_with_0, cross_program)
+
+    # 2. 判断是否在该节目的第二天存在起始时间为00:00且节目名称相同的节目
+    cross_program_clean = []
+    for program in cross_program_night:
+        program_date = parent_map[program].get('date')
+        program_date = datetime.datetime.strptime(program_date, '%Y-%m-%d')
+        next_date = program_date + datetime.timedelta(days=1)
+        next_date = next_date.strftime('%Y-%m-%d')
+        next_day_programs = schedule_xml.find(".//schedule[@date='%s']" % next_date).iter('event')
+        next_day_programs = [next_program for next_program in next_day_programs if (
+            next_program.find('start_time').text == '00:00'
+            and next_program.find('title').text == program.find('title').text
+        )]
+        # 3. 修改该结束时间为00:00的节目的结束时间为第二天节目的结束时间,删除第二天的该节目
+        if next_day_programs:
+            program.find('end_time').text = next_day_programs[0].find('end_time').text
+            parent_map[next_day_programs[0]].remove(next_day_programs[0])
+
+    # 4. 将element tree转化为字符串返回
+    return et.tostring(schedule_xml)
+
 def schedule_loop():
     global schedule_cache_dict, cur_time
     if channel_cache is not None:
@@ -335,12 +373,17 @@ def schedule_loop():
                 if acquired:
                     channel_root = et.fromstring(channel_cache)
                     cur_time = time.strftime('%Y%m%d%H%M%S', time.localtime())
-                    for index,channel in enumerate(channel_root.iter('channel')):
+                    for index, channel in enumerate(channel_root.iter('channel')):
                         id = channel.get('id')
                         name = channel.find('name')
                         schedule_xml = fetch_schedule_xml(id)
-                        if schedule_xml is not None:
-                            schedule_cache_dict[id] = schedule_xml
+                        try:
+                            schedule_xml_clean = filter_cross_midnight_program(schedule_xml)
+                        except Exception as e:
+                            logging.exception(e)
+                            schedule_xml_clean = schedule_xml
+                        if schedule_xml_clean is not None:
+                            schedule_cache_dict[id] = schedule_xml_clean
                 else:
                     raise Exception('Failed to get mutex!')
                 time.sleep(.1)
@@ -351,14 +394,14 @@ def schedule_loop():
                 time.sleep(1)
                 schedule_loop()
             else:
-                t = threading.Timer(12*60*60, schedule_loop)
+                t = threading.Timer(12 * 60 * 60, schedule_loop)
                 t.setDaemon(True)
                 t.start()
 
 
 @cache_lock
 def update_xml_process(update_xml: et.Element):
-    if update_xml.find('schedules') is None:return
+    if update_xml.find('schedules') is None: return
     for schedule in update_xml.find('schedules').iter('schedule'):
         channel_id = schedule.get('channel_id')
         date = schedule.get('date')
@@ -373,21 +416,21 @@ def update_xml_process(update_xml: et.Element):
             op = event.get('op')
             event_id = event.get('id')
             if op == 'add':
-                child_schedule = old_schedule.find(".//schedule[@date='%s']"%date)
+                child_schedule = old_schedule.find(".//schedule[@date='%s']" % date)
                 if child_schedule is None:
                     child_schedule = et.SubElement(old_schedule,
-                                  'schedule',
-                                  attrib={'channel_id':channel_id,'epg_code':epg_code,'date':date}
-                    )
-                item = child_schedule.find(".//event[@id='%s']"%event_id)
+                                                   'schedule',
+                                                   attrib={'channel_id': channel_id, 'epg_code': epg_code, 'date': date}
+                                                   )
+                item = child_schedule.find(".//event[@id='%s']" % event_id)
                 if item is not None:
                     child_schedule.remove(item)
                 event.attrib.pop('op')
                 child_schedule.append(event)
             elif op == 'del':
-                item = old_schedule.find(".//event[@id='%s']"%event_id)
-                if item is None:continue
-                old_schedule.find(".//event[@id='%s']/.."%event_id).remove(item)
+                item = old_schedule.find(".//event[@id='%s']" % event_id)
+                if item is None: continue
+                old_schedule.find(".//event[@id='%s']/.." % event_id).remove(item)
         schedule_cache_dict[channel_id] = et.tostring(old_schedule)
 
 
@@ -408,7 +451,7 @@ def update_loop():
     except Exception as e:
         logging.exception(e)
     finally:
-        t = threading.Timer(5*60,update_loop)
+        t = threading.Timer(5 * 60, update_loop)
         t.setDaemon(True)
         t.start()
 
@@ -427,7 +470,6 @@ if __name__ == '__main__':
     logging.info('start running flask')
     app.run(host='0.0.0.0', port=int(PORT), debug=False)
     logging.info('EPG Master Server Stopped!')
-
 
 """
 <document>
