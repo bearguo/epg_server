@@ -324,8 +324,9 @@ def channel_loop():
     except Exception as e:
         logging.exception(e)
         logging.info('fetch channel xml failed. Retry after 10 seconds')
-        time.sleep(10)
-        channel_loop()
+        channel_timer = threading.Timer(10, channel_loop)
+        channel_timer.setDaemon(True)
+        channel_timer.start()
     else:
         channel_timer = threading.Timer(12 * 60 * 60, channel_loop)
         channel_timer.setDaemon(True)
@@ -392,9 +393,10 @@ def schedule_loop():
             except Exception as e:
                 mutex.release()
                 logging.exception(e)
-                logging.error('parse channel_cache xml failed. Try again after 1 second')
-                time.sleep(1)
-                schedule_loop()
+                logging.error('parse channel_cache xml failed. Try again after 30 second')
+                t = threading.Timer(30, schedule_loop)
+                t.setDaemon(True)
+                t.start()
             else:
                 t = threading.Timer(12 * 60 * 60, schedule_loop)
                 t.setDaemon(True)
