@@ -27,7 +27,7 @@ elif __file__:
     cur_path = os.path.dirname(os.path.realpath(__file__))
 log_file_name = str(Path(cur_path) / 'epg.log')
 log_file_handler = TimedRotatingFileHandler(filename=log_file_name, when="D", interval=1, backupCount=3)
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s [line:%(lineno)d] %(levelname)s %(message)s',
                     handlers=[log_file_handler]
                     )
