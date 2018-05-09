@@ -77,7 +77,7 @@ def string_to_html(string):
 def get_schedule_xml(url: str):
     # global debug_counter
     # debug_counter += 1
-    # print("in get schedule xml function!", debug_counter)
+    # logging.info("in get schedule xml function!", debug_counter)
     web_page = urlopen(url, timeout=5).read()
     return web_page
 
@@ -86,7 +86,7 @@ def get_schedule_xml(url: str):
 def get_channel_xml(url: str):
     # global debug_counter
     # debug_counter += 1
-    # print("in get channel xml function!", debug_counter)
+    # logging.info("in get channel xml function!", debug_counter)
     web_page = urlopen(url, timeout=5).read()
     return web_page
 
@@ -210,7 +210,7 @@ def fetch_schedule_xml(channel_id):
     #     </event>
     # </schedule>
     # </document>"""
-    print('Enter channel:%s' % channel_id)
+    logging.info('Enter channel:%s' % channel_id)
     params = {
         'secret': SECRET_KEY,
         'id': channel_id
@@ -268,7 +268,7 @@ def fetch_channel_xml():
     #         </name>
     #     </channel>
     # </document>"""
-    print('Enter fetch channel')
+    logging.info('Enter fetch channel')
     params = {
         'secret': SECRET_KEY,
     }
