@@ -25,7 +25,7 @@ if getattr(sys, 'frozen', False):
     cur_path = os.path.dirname(sys.executable)
 elif __file__:
     cur_path = os.path.dirname(os.path.realpath(__file__))
-log_file_name = str(Path(cur_path) / 'epg.log')
+log_file_name = str(Path(cur_path) / 'conf' / 'epg.log')
 log_file_handler = TimedRotatingFileHandler(filename=log_file_name, when="D", interval=1, backupCount=3)
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s [line:%(lineno)d] %(levelname)s %(message)s',
@@ -35,7 +35,7 @@ logging.info('log file created!')
 PORT = 10010
 try:
     cf = configparser.ConfigParser()
-    cf.read(str(Path(cur_path) / 'epg.conf'))
+    cf.read(str(Path(cur_path) / 'conf' / 'epg.conf'))
     THIRD_PARTY_EPG_URL_BASE = cf.get('epg_master', 'base_url')
     PORT = cf.get('server', 'port')
     logging.info('epg slave port is %s' % PORT)
