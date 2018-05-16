@@ -4,11 +4,11 @@ WORKDIR /app/
 
 COPY requirements.txt /app/
 
+RUN pip install -r /app/requirements.txt
+
 COPY epg.py /app/
 
 COPY conf/epg.conf /app/conf/
-
-RUN pip install -r /app/requirements.txt
 
 RUN apk add --no-cache curl
 
