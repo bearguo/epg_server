@@ -6,7 +6,7 @@ COPY requirements.txt /app/
 
 COPY epg.py /app/
 
-COPY epg.conf /app/conf/
+COPY conf/epg.conf /app/conf/
 
 RUN pip install -r /app/requirements.txt
 
