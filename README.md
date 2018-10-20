@@ -26,7 +26,7 @@ base_url = http://1.8.203.198:9999/EPG # This line specified the master epg serv
 
 Examples:
 ```shell
-http://localhost:10011/EPG/channel?secret=VYDcCe1s
+http://localhost:10010/EPG/channel?secret=VYDcCe1s
 ```
 
 2. Get program information for one channel
@@ -34,7 +34,7 @@ http://localhost:10011/EPG/channel?secret=VYDcCe1s
 
 Examples:
 ```shell
-http://localhost:10011/EPG/schedule?secret=VYDcCe1s&id=CCTV1
+http://localhost:10010/EPG/schedule?secret=VYDcCe1s&id=CCTV1
 ```
 
 
