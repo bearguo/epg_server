@@ -21,6 +21,7 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s [line:%(lineno)d] %(levelname)s %(message)s',
                     handlers=[log_file_handler]
                     )
+logging.info('log file created')
 PORT = 10010
 
 try:
