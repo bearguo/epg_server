@@ -149,10 +149,16 @@ def refresh_caches():
     :return: None
     """
     while 1:
-        global schedule_cache_dict
-        wrapcache.flush()
-        schedule_cache_dict = {}
-        time.sleep(24 * 60 * 60)
+        try:
+            global schedule_cache_dict
+            wrapcache.flush()
+            schedule_cache_dict = {}
+        except:
+            logging.warning('refresh caches failed')
+            time.sleep(10)
+        else:
+            logging.info('refresh caches success')
+            time.sleep(24 * 60 * 60)
 
 
 @contextmanager
@@ -328,6 +334,7 @@ def channel_loop():
         channel_timer.setDaemon(True)
         channel_timer.start()
     else:
+        logging.info('fetch channel success')
         channel_timer = threading.Timer(12 * 60 * 60, channel_loop)
         channel_timer.setDaemon(True)
         channel_timer.start()
@@ -386,6 +393,7 @@ def schedule_loop():
                             logging.exception(e)
                             schedule_xml_clean = schedule_xml
                         if schedule_xml_clean is not None:
+                            logging.info('fetch %s shcedule success' % id)
                             schedule_cache_dict[id] = schedule_xml_clean
                 else:
                     raise Exception('Failed to get mutex!')
