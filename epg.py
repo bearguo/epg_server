@@ -5,7 +5,7 @@ from flask import (
 )
 from flask_cors import CORS
 import os, sys, logging
-from logging.handlers import TimedRotatingFileHandler
+from logging.handlers import RotatingFileHandler
 import configparser
 from pathlib import Path
 from urllib.parse import urljoin, urlencode, urlparse
@@ -16,7 +16,8 @@ if getattr(sys, 'frozen', False):
 elif __file__:
     cur_path = os.path.dirname(os.path.realpath(__file__))
 log_file_name = str(Path(cur_path) / 'conf' / 'epg.log')
-log_file_handler = TimedRotatingFileHandler(filename=log_file_name, when="D", interval=1, backupCount=3)
+log_file_handler = RotatingFileHandler(filename=log_file_name, maxBytes=10*1024*1024, backupCount=3)
+#log_file_handler = TimedRotatingFileHandler(filename=log_file_name, when="D", interval=1, backupCount=3)
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s [line:%(lineno)d] %(levelname)s %(message)s',
                     handlers=[log_file_handler]
