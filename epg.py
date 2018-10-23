@@ -377,6 +377,7 @@ def filter_cross_midnight_program(schedule_xml):
 
 def schedule_loop():
     global schedule_cache_dict, cur_time
+    logging.info('start schedule_loop')
     if channel_cache is not None:
         with acquire_timeout(mutex, 3) as acquired:
             try:
@@ -406,7 +407,7 @@ def schedule_loop():
                 t.setDaemon(True)
                 t.start()
             else:
-                t = threading.Timer(12 * 60 * 60, schedule_loop)
+                t = threading.Timer(1 * 60 * 60, schedule_loop)
                 t.setDaemon(True)
                 t.start()
 
