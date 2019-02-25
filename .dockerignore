@@ -1,4 +1,7 @@
 __pycache__
-.git
 build
 env
+.*
+*.md
+Dockerfile
+
