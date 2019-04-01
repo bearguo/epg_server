@@ -477,9 +477,6 @@ def fetch_all_data():
 
 if __name__ == '__main__':
     fetch_all_data()
-    # t = threading.Thread(target=refresh_caches)
-    # t.setDaemon(True) # Kill the thread t when the main process stopped.
-    # t.start()
     logging.info('start running flask')
     app.run(host='0.0.0.0', port=int(PORT), debug=False)
     logging.info('EPG Master Server Stopped!')
