@@ -31,8 +31,7 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s [line:%(lineno)d] %(levelname)s %(message)s',
                     handlers=[log_file_handler]
                     )
-logging.info('log file created!')
-PORT = 10010
+
 try:
     cf = configparser.ConfigParser()
     cf.read(str(Path(cur_path) / 'conf' / 'epg.conf'))
@@ -166,7 +165,8 @@ def acquire_timeout(lock, timeout):
     result = lock.acquire(timeout=timeout)
     yield result
     if result:
-        lock.release()
+        try:
+            lock.release()
 
 
 def cache_lock(func):

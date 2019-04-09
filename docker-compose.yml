@@ -1,0 +1,51 @@
+version: '3'
+
+services:
+  epg:
+    image: registry.cn-hangzhou.aliyuncs.com/bearguo/epg:master
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 180s
+        window: 180s
+    volumes:
+      - "/home/share/docker/epg/conf:/app/conf"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1G"
+        max-file: "3"
+    ports:
+      - 10010:10010
+
+  nettest:
+    image: registry.cn-hangzhou.aliyuncs.com/bearguo/nettest:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - "/home/share/docker/nettest/logs:/app/logs"
+      - "/home/share/docker/nettest/conf:/app/conf"
+    hostname: DNS   
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1G"
+        max-file: "3"
+  
+  socks5:
+    image: serjs/go-socks5-proxy
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    ports:
+      - 1080:1080
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1G"
+        max-file: "3"
+
