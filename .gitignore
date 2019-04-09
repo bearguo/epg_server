@@ -10,4 +10,6 @@ dist
 # others
 *.log
 *.log.*
-.vscode
+.*
+!.gitignore
+!.dockerignore
