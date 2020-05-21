@@ -11,5 +11,8 @@ HEALTHCHECK --interval=5s --timeout=3s CMD curl -fs http://localhost:10010/EPG/c
 EXPOSE 10010
 
 CMD ["python", "epg.py"]
-RUN pip install -r /app/requirements.txt \
-    && apk add --no-cache curl
+RUN apk add --no-cache tzdata curl \
+    && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \ 
+    && echo "Asia/Shanghai" > /etc/timezone \
+    && pip install -r /app/requirements.txt \
+    && apk add  
