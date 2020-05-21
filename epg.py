@@ -3,6 +3,7 @@ from flask import (
     request,
     make_response
 )
+from flask_caching import Cache
 from flask_cors import CORS
 import os, sys, logging
 from logging.handlers import RotatingFileHandler
@@ -38,9 +39,14 @@ except Exception as e:
 
 app = Flask('__name__')
 CORS(app)
+cache = Cache()
+cache.init_app(app,config={
+    "CACHE_TYPE":"simple",
+    "CACHE_DEFAULT_TIMEOUT": 600,})
 SECRET_KEY = 'VYDcCe1s'
 
 @app.route('/EPG/channel', methods=['GET'])
+@cache.cached(timeout=3600)
 def channel():
     """
     Cache the 3rd party epg server channel api.
@@ -72,7 +78,8 @@ def channel():
     rsp.mimetype = 'text/xml'
     return rsp
 
-@app.route('/EPG/schedule')
+@app.route('/EPG/schedule',methods=["GET"])
+@cache.cached()
 def schedule():
     # 1. Check the secret key value.
     secret_key = request.args.get('secret', None)
