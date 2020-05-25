@@ -1,11 +1,8 @@
 from flask import (
     Flask,
     request,
-    make_response,
-    url_for,
-    redirect
+    make_response
 )
-from flask_caching import Cache
 from flask_cors import CORS
 import os, sys, logging
 from logging.handlers import RotatingFileHandler
@@ -25,35 +22,16 @@ logging.basicConfig(level=logging.INFO,
                     handlers=[log_file_handler]
                     )
 logging.info('log file created')
-PORT = 10010
 
-try:
-    cf = configparser.ConfigParser()
-    cf.read(str(Path(cur_path) / 'conf' / 'epg.conf'))
-    THIRD_PARTY_EPG_URL_BASE = cf.get('epg_master', 'base_url')
-    PORT = cf.get('server', 'port')
-    logging.info('epg slave port is %s' % PORT)
-    logging.info('epg master url is: %s' % THIRD_PARTY_EPG_URL_BASE)
-except Exception as e:
-    logging.exception('Parse configuration file failed!')
-    sys.exit(-1)
+MASTER_PATH = "epg"
+PORT = 10010
+SECRET_KEY = 'VYDcCe1s'
 
 app = Flask('__name__')
 CORS(app)
-cache = Cache()
-cache.init_app(app,config={
-    "CACHE_TYPE":"simple",
-    "CACHE_DEFAULT_TIMEOUT": 600,})
-SECRET_KEY = 'VYDcCe1s'
 
 @app.route('/EPG/channel', methods=['GET'])
-@cache.cached(timeout=3600)
 def channel():
-    """
-    Cache the 3rd party epg server channel api.
-
-    :return: xml page from 3rd party epg server.
-    """
     # 1. Check the secret key value.
     secret_key = request.args.get('secret', None)
     if secret_key is None:
@@ -68,7 +46,7 @@ def channel():
     params = {
         'secret': SECRET_KEY,
     }
-    url = '%s/%s?%s' % (THIRD_PARTY_EPG_URL_BASE, 'channel', urlencode(params))
+    url = '%s/%s?%s' % (MASTER_PATH, 'channel', urlencode(params))
     try:
         web_page = urlopen(url, timeout=20).read()
     except Exception as e:
@@ -79,10 +57,9 @@ def channel():
     rsp.mimetype = 'text/xml'
     return rsp
 
-@app.route("/EPG/schedule/<channelName>", methods=["GET"])
-@cache.cached()
+@app.route("/EPG/schedule")
 def program(channelName):
-    '''
+    
     secret_key = request.args.get('secret', None)
     if secret_key is None:
         error_message = 'missing the secret key! please check the url!'
@@ -92,12 +69,17 @@ def program(channelName):
         error_message = 'wrong secret key!'
         logging.error(error_message)
         return error_message
-    '''
+
+    channel_id = request.args.get('id', None)
+    if channel_id is None:
+        error_message = 'missing the id key! please check the url!'
+        logging.error(error_message)
+        return error_message
+
     params = {
         'secret': SECRET_KEY,
-        'id': channelName
     }
-    url = '%s/%s?%s' % (THIRD_PARTY_EPG_URL_BASE, 'schedule', urlencode(params))
+    url = '%s/%s/%s?%s' % (MASTER_PATH, 'schedule', channel_id, urlencode(params))
     try:
         web_page = urlopen(url, timeout=20).read()
     except Exception as e:
