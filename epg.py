@@ -15,7 +15,7 @@ if getattr(sys, 'frozen', False):
     cur_path = os.path.dirname(sys.executable)
 elif __file__:
     cur_path = os.path.dirname(os.path.realpath(__file__))
-log_file_name = str(Path(cur_path) / 'conf' / 'epg.log')
+log_file_name = str(Path(cur_path) / 'log' / 'epg.log')
 log_file_handler = RotatingFileHandler(filename=log_file_name, maxBytes=10*1024*1024, backupCount=3)
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s [line:%(lineno)d] %(levelname)s %(message)s',
