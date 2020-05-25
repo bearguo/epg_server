@@ -6,7 +6,6 @@ from flask import (
 from flask_cors import CORS
 import os, sys, logging
 from logging.handlers import RotatingFileHandler
-import configparser
 from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import urlopen
