@@ -30,6 +30,7 @@ try:
     cf = configparser.ConfigParser()
     cf.read(str(Path(cur_path) / 'conf' / 'epg.conf'))
     THIRD_PARTY_EPG_URL_BASE = cf.get('epg_master', 'base_url')
+    LOCAL_URL_BASE = cf.get('epg_master', 'local_url')
     PORT = cf.get('server', 'port')
     logging.info('epg slave port is %s' % PORT)
     logging.info('epg master url is: %s' % THIRD_PARTY_EPG_URL_BASE)
@@ -105,6 +106,41 @@ def program(channelName):
     rsp = make_response(web_page)
     rsp.mimetype = 'text/xml'
     return rsp
+
+#TODO:Find a better way to solve this problem   
+@app.route('/EPG/schedule')
+def schedule():
+    # 1. Check the secret key value.
+    secret_key = request.args.get('secret', None)
+    if secret_key is None:
+        error_message = 'missing the secret key! please check the url!'
+        logging.error(error_message)
+        return error_message
+    elif secret_key != SECRET_KEY:
+        error_message = 'wrong secret key!'
+        logging.error(error_message)
+        return error_message
+
+    # 2. Check the id
+    channel_id = request.args.get('id', None)
+    if channel_id is None:
+        error_message = 'missing the id key! please check the url!'
+        logging.error(error_message)
+        return error_message
+    params = {
+        'secret': SECRET_KEY,
+    }
+    url = '%s/%s/%s?%s' % (LOCAL_URL_BASE, 'schedule',channel_id, urlencode(params))
+    try:
+        web_page = urlopen(url, timeout=20).read()
+    except Exception as e:
+        logging.error('Fetch schedule xml failed. %s' % url)
+        logging.exception(e)
+        raise Exception('Error fetching schedule url')
+    rsp = make_response(web_page)
+    rsp.mimetype = 'text/xml'
+    return rsp
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(PORT), debug=False)
