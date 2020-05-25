@@ -78,10 +78,9 @@ def channel():
     rsp.mimetype = 'text/xml'
     return rsp
 
-@app.route('/EPG/schedule',methods=["GET"])
+@app.route("/EPG/schedule/<channelName>", methods=["GET"])
 @cache.cached()
-def schedule():
-    # 1. Check the secret key value.
+def program(channelName):
     secret_key = request.args.get('secret', None)
     if secret_key is None:
         error_message = 'missing the secret key! please check the url!'
@@ -91,18 +90,10 @@ def schedule():
         error_message = 'wrong secret key!'
         logging.error(error_message)
         return error_message
-
-    # 2. Check the id
-    channel_id = request.args.get('id', None)
-    if channel_id is None:
-        error_message = 'missing the id key! please check the url!'
-        logging.error(error_message)
-        return error_message
-
-    logging.info('Enter channel:%s' % channel_id)
+    
     params = {
         'secret': SECRET_KEY,
-        'id': channel_id
+        'id': channelName
     }
     url = '%s/%s?%s' % (THIRD_PARTY_EPG_URL_BASE, 'schedule', urlencode(params))
     try:
@@ -114,7 +105,6 @@ def schedule():
     rsp = make_response(web_page)
     rsp.mimetype = 'text/xml'
     return rsp
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(PORT), debug=False)
