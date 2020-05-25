@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO,
                     )
 logging.info('log file created')
 
-MASTER_PATH = "epg_cloud:10009/EPG"
+MASTER_PATH = "http://epg_cloud:10009/EPG"
 PORT = 10010
 SECRET_KEY = 'VYDcCe1s'
 
@@ -58,7 +58,7 @@ def channel():
     return rsp
 
 @app.route("/EPG/schedule")
-def program(channelName):
+def program():
     
     secret_key = request.args.get('secret', None)
     if secret_key is None:
