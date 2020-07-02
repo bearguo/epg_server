@@ -4,7 +4,9 @@ from flask import (
     make_response
 )
 from flask_cors import CORS
-import os, sys, logging
+import os
+import sys
+import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from urllib.parse import urlencode
@@ -15,7 +17,8 @@ if getattr(sys, 'frozen', False):
 elif __file__:
     cur_path = os.path.dirname(os.path.realpath(__file__))
 log_file_name = str(Path(cur_path) / 'log' / 'epg.log')
-log_file_handler = RotatingFileHandler(filename=log_file_name, maxBytes=10*1024*1024, backupCount=3)
+log_file_handler = RotatingFileHandler(
+    filename=log_file_name, maxBytes=10*1024*1024, backupCount=3)
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s [line:%(lineno)d] %(levelname)s %(message)s',
                     handlers=[log_file_handler]
@@ -28,6 +31,7 @@ SECRET_KEY = 'VYDcCe1s'
 
 app = Flask('__name__')
 CORS(app)
+
 
 @app.route('/EPG/channel', methods=['GET'])
 def channel():
@@ -42,10 +46,7 @@ def channel():
         logging.error(error_message)
         return error_message
 
-    params = {
-        'secret': SECRET_KEY,
-    }
-    url = '%s/%s?%s' % (MASTER_PATH, 'channel', urlencode(params))
+    url = '%s/%s' % (MASTER_PATH, 'channel')
     try:
         web_page = urlopen(url, timeout=20).read()
     except Exception as e:
@@ -56,9 +57,10 @@ def channel():
     rsp.mimetype = 'text/xml'
     return rsp
 
+
 @app.route("/EPG/schedule")
 def program():
-    
+
     secret_key = request.args.get('secret', None)
     if secret_key is None:
         error_message = 'missing the secret key! please check the url!'
@@ -75,10 +77,7 @@ def program():
         logging.error(error_message)
         return error_message
 
-    params = {
-        'secret': SECRET_KEY,
-    }
-    url = '%s/%s/%s?%s' % (MASTER_PATH, 'schedule', channel_id, urlencode(params))
+    url = '%s/%s/%s' % (MASTER_PATH, 'schedule', channel_id)
     try:
         web_page = urlopen(url, timeout=20).read()
     except Exception as e:
@@ -89,6 +88,6 @@ def program():
     rsp.mimetype = 'text/xml'
     return rsp
 
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(PORT), debug=False)
-
