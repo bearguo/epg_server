@@ -5,7 +5,7 @@ WORKDIR /app/
 COPY requirements.txt /app/
 COPY epg.py /app/
 
-HEALTHCHECK --interval=5s --timeout=3s CMD curl -fs http://localhost:10010/EPG/channel?secret=VYDcCe1s || exit 1
+HEALTHCHECK --interval=5s --timeout=3s CMD curl -fs http://localhost:10009/EPG/channel?secret=VYDcCe1s || exit 1
 
 CMD ["python", "epg.py"]
 RUN apk add --no-cache tzdata curl \
