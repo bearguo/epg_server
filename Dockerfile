@@ -8,6 +8,7 @@ COPY epg.py /app/
 HEALTHCHECK --interval=5s --timeout=3s CMD curl -fs http://localhost:10010/EPG/channel?secret=VYDcCe1s || exit 1
 
 EXPOSE 10010
+ENV MASTER_PATH = epg_cloud
 
 CMD ["python", "epg.py"]
 RUN apk add --no-cache tzdata curl \

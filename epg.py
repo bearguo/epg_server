@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO,
                     )
 logging.info('log file created')
 
-MASTER_PATH = "http://epg_cloud:10009/EPG"
+MASTER_PATH = "http://" + os.getenv("MASTER_PATH") + ":10009/EPG"
 PORT = 10010
 SECRET_KEY = 'VYDcCe1s'
 
