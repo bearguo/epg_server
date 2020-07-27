@@ -35,6 +35,7 @@ CORS(app)
 
 @app.route('/EPG/channel', methods=['GET'])
 def channel():
+    web_page = ""
     # 1. Check the secret key value.
     secret_key = request.args.get('secret', None)
     if secret_key is None:
@@ -60,7 +61,7 @@ def channel():
 
 @app.route("/EPG/schedule")
 def program():
-
+    web_page = ""
     secret_key = request.args.get('secret', None)
     if secret_key is None:
         error_message = 'missing the secret key! please check the url!'
