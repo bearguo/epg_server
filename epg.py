@@ -52,7 +52,7 @@ def channel():
     except Exception as e:
         logging.error('Fetch channel xml failed. %s' % url)
         logging.exception(e)
-        raise Exception('Error fetch channel xml')
+        # raise Exception('Error fetch channel xml')
     rsp = make_response(web_page)
     rsp.mimetype = 'text/xml'
     return rsp
@@ -83,7 +83,7 @@ def program():
     except Exception as e:
         logging.error('Fetch schedule xml failed. %s' % url)
         logging.exception(e)
-        raise Exception('Error fetching schedule url')
+        # raise Exception('Error fetching schedule url')
     rsp = make_response(web_page)
     rsp.mimetype = 'text/xml'
     return rsp
