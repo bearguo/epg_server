@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  epg_cloud:
+    image: registry.cn-hangzhou.aliyuncs.com/bearguo/epg:cloud
+    deploy:
+      replicas: 1
+      restart_policy:
+        delay: 60s
+        condition: on-failure
+        window: 60s
+    volumes:
+      - "/home/ubuntu/docker/epg/cloud/log:/app/log"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1G"
+        max-file: "3"
+    restart: always
+    networks:
+      - webnet
+
+  epg_api:
+    depends_on:
+      - epg_cloud
+    image: registry.cn-hangzhou.aliyuncs.com/bearguo/epg:api
+    deploy:
+        replicas: 1
+        restart_policy:
+          delay: 60s
+          condition: on-failure
+          window: 60s
+    volumes:
+      - "/home/ubuntu/docker/epg/api/log:/app/log"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1G"
+        max-file: "3"
+    restart: always
+    ports: 
+      - 10010:10010
+    networks:
+      - webnet
+
+networks:
+  webnet:
