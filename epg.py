@@ -15,7 +15,8 @@ from urllib.request import urlopen
 from urllib.parse import urljoin, urlencode, urlparse
 import wrapcache
 from pathlib import Path
-import os, sys
+import os
+import sys
 from xml.etree import ElementTree as et
 from retry import retry
 import time
@@ -26,7 +27,8 @@ elif __file__:
     cur_path = os.path.dirname(os.path.realpath(__file__))
 log_file_name = str(Path(cur_path) / 'conf' / 'epg.log')
 #log_file_handler = TimedRotatingFileHandler(filename=log_file_name, when="D", interval=1, backupCount=3)
-log_file_handler = RotatingFileHandler(filename=log_file_name, maxBytes=10*1024*1024, backupCount=3)
+log_file_handler = RotatingFileHandler(
+    filename=log_file_name, maxBytes=10*1024*1024, backupCount=3)
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s [line:%(lineno)d] %(levelname)s %(message)s',
                     handlers=[log_file_handler]
@@ -221,7 +223,8 @@ def fetch_schedule_xml(channel_id):
         'secret': SECRET_KEY,
         'id': channel_id
     }
-    url = '%s/%s?%s' % (THIRD_PARTY_EPG_URL_BASE, 'schedule', urlencode(params))
+    url = '%s/%s?%s' % (THIRD_PARTY_EPG_URL_BASE,
+                        'schedule', urlencode(params))
     try:
         web_page = urlopen(url, timeout=20).read()
     except Exception as e:
@@ -361,19 +364,22 @@ def filter_cross_midnight_program(schedule_xml):
             program_date = datetime.datetime.strptime(program_date, '%Y-%m-%d')
             next_date = program_date + datetime.timedelta(days=1)
             next_date = next_date.strftime('%Y-%m-%d')
-            next_day_programs = schedule_xml.find(".//schedule[@date='%s']" % next_date).iter('event')
+            next_day_programs = schedule_xml.find(
+                ".//schedule[@date='%s']" % next_date).iter('event')
             next_day_programs = [next_program for next_program in next_day_programs if (
                 next_program.find('start_time').text == '00:00'
                 and next_program.find('title').text == program.find('title').text
             )]
             # 3. 修改该结束时间为00:00的节目的结束时间为第二天节目的结束时间,删除第二天的该节目
             if next_day_programs:
-                program.find('end_time').text = next_day_programs[0].find('end_time').text
+                program.find('end_time').text = next_day_programs[0].find(
+                    'end_time').text
                 parent_map[next_day_programs[0]].remove(next_day_programs[0])
         except:
             continue
     # 4. 将element tree转化为字符串返回
     return et.tostring(schedule_xml)
+
 
 def schedule_loop():
     global schedule_cache_dict, cur_time
@@ -389,7 +395,8 @@ def schedule_loop():
                         name = channel.find('name')
                         schedule_xml = fetch_schedule_xml(id)
                         try:
-                            schedule_xml_clean = filter_cross_midnight_program(schedule_xml)
+                            schedule_xml_clean = filter_cross_midnight_program(
+                                schedule_xml)
                         except Exception as e:
                             logging.exception(e)
                             schedule_xml_clean = schedule_xml
@@ -402,7 +409,8 @@ def schedule_loop():
             except Exception as e:
                 mutex.release()
                 logging.exception(e)
-                logging.error('parse channel_cache xml failed. Try again after 30 second')
+                logging.error(
+                    'parse channel_cache xml failed. Try again after 30 second')
                 t = threading.Timer(30, schedule_loop)
                 t.setDaemon(True)
                 t.start()
@@ -414,7 +422,8 @@ def schedule_loop():
 
 @cache_lock
 def update_xml_process(update_xml: et.Element):
-    if update_xml.find('schedules') is None: return
+    if update_xml.find('schedules') is None:
+        return
     for schedule in update_xml.find('schedules').iter('schedule'):
         channel_id = schedule.get('channel_id')
         date = schedule.get('date')
@@ -429,11 +438,13 @@ def update_xml_process(update_xml: et.Element):
             op = event.get('op')
             event_id = event.get('id')
             if op == 'add':
-                child_schedule = old_schedule.find(".//schedule[@date='%s']" % date)
+                child_schedule = old_schedule.find(
+                    ".//schedule[@date='%s']" % date)
                 if child_schedule is None:
                     child_schedule = et.SubElement(old_schedule,
                                                    'schedule',
-                                                   attrib={'channel_id': channel_id, 'epg_code': epg_code, 'date': date}
+                                                   attrib={
+                                                       'channel_id': channel_id, 'epg_code': epg_code, 'date': date}
                                                    )
                 item = child_schedule.find(".//event[@id='%s']" % event_id)
                 if item is not None:
@@ -442,8 +453,10 @@ def update_xml_process(update_xml: et.Element):
                 child_schedule.append(event)
             elif op == 'del':
                 item = old_schedule.find(".//event[@id='%s']" % event_id)
-                if item is None: continue
-                old_schedule.find(".//event[@id='%s']/.." % event_id).remove(item)
+                if item is None:
+                    continue
+                old_schedule.find(
+                    ".//event[@id='%s']/.." % event_id).remove(item)
         schedule_cache_dict[channel_id] = et.tostring(old_schedule)
 
 
