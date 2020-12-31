@@ -42,6 +42,7 @@ SECRET_KEY = 'VYDcCe1s'
 
 @app.route('/EPG/channel', methods=['GET'])
 def channel():
+    web_page = ''
     """
     Cache the 3rd party epg server channel api.
 
@@ -74,6 +75,7 @@ def channel():
 
 @app.route('/EPG/schedule')
 def schedule():
+    web_page = ''
     # 1. Check the secret key value.
     secret_key = request.args.get('secret', None)
     if secret_key is None:
