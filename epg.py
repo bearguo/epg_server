@@ -33,7 +33,8 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s [line:%(lineno)d] %(levelname)s %(message)s',
                     handlers=[log_file_handler]
                     )
-
+logging.info('log file created!')
+PORT = 10010
 try:
     cf = configparser.ConfigParser()
     cf.read(str(Path(cur_path) / 'conf' / 'epg.conf'))
@@ -450,7 +451,26 @@ def update_xml_process(update_xml: et.Element):
                 if item is not None:
                     child_schedule.remove(item)
                 event.attrib.pop('op')
-                child_schedule.append(event)
+                try:
+                    modified_event_time = event.find('start_time').text
+                except Exception as e:
+                    logging.error("can not get start time of modified event")
+                    logging.error(e)
+                    modified_event_time = '00:00'
+                # child_schedule.append(event)
+                cnt = 0
+                for old_event in child_schedule.iter('event'):
+                    try:
+                        if old_event.find('start_time').text < modified_event_time:
+                            cnt += 1
+                        else:
+                            break
+                    except Exception as e:
+                        logging.error(
+                            'schedule xml format error. can not get start time of program %s' % event.attrib)
+                        logging.error(e)
+                        break
+                child_schedule.insert(cnt, event)
             elif op == 'del':
                 item = old_schedule.find(".//event[@id='%s']" % event_id)
                 if item is None:
