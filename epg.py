@@ -168,8 +168,7 @@ def acquire_timeout(lock, timeout):
     result = lock.acquire(timeout=timeout)
     yield result
     if result:
-        try:
-            lock.release()
+        lock.release()
 
 
 def cache_lock(func):
@@ -179,7 +178,6 @@ def cache_lock(func):
             if acquired:
                 result = func(*args, **kwargs)
         return result
-
     return wrapper
 
 
