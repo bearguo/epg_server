@@ -104,11 +104,11 @@ def channel():
     secret_key = request.args.get('secret', None)
     if secret_key is None:
         error_message = 'missing the secret key! please check the url!'
-        logging.error(error_message)
+        logging.info(error_message)
         return error_message
     elif secret_key != SECRET_KEY:
         error_message = 'wrong secret key!'
-        logging.error(error_message)
+        logging.info(error_message)
         return error_message
 
     rsp = make_response(channel_cache)
@@ -122,22 +122,22 @@ def schedule():
     secret_key = request.args.get('secret', None)
     if secret_key is None:
         error_message = 'missing the secret key! please check the url!'
-        logging.error(error_message)
+        logging.info(error_message)
         return error_message
     elif secret_key != SECRET_KEY:
         error_message = 'wrong secret key!'
-        logging.error(error_message)
+        logging.info(error_message)
         return error_message
 
     # 2. Check the id
     channel_id = request.args.get('id', None)
     if channel_id is None:
         error_message = 'missing the id key! please check the url!'
-        logging.error(error_message)
+        logging.info(error_message)
         return error_message
     elif channel_id not in schedule_cache_dict:
         error_message = 'wrong channel id! please check the id!'
-        logging.error(error_message)
+        logging.info(error_message)
         return error_message
     rsp = make_response(schedule_cache_dict.get(channel_id))
     rsp.mimetype = 'text/xml'
@@ -168,7 +168,10 @@ def acquire_timeout(lock, timeout):
     result = lock.acquire(timeout=timeout)
     yield result
     if result:
-        lock.release()
+        try:
+            lock.release()
+        except Exception:
+            pass
 
 
 def cache_lock(func):
@@ -400,6 +403,8 @@ def schedule_loop():
                             logging.exception(e)
                             schedule_xml_clean = schedule_xml
                         if schedule_xml_clean is not None:
+                            et.ElementTree(et.fromstring(schedule_xml_clean)).write(
+                                './schedule/%s.xml' % id)
                             logging.info('fetch %s shcedule success' % id)
                             schedule_cache_dict[id] = schedule_xml_clean
                 else:
@@ -414,7 +419,7 @@ def schedule_loop():
                 t.setDaemon(True)
                 t.start()
             else:
-                t = threading.Timer(1 * 60 * 60, schedule_loop)
+                t = threading.Timer(12 * 60 * 60, schedule_loop)
                 t.setDaemon(True)
                 t.start()
 
@@ -433,9 +438,13 @@ def update_xml_process(update_xml: et.Element):
         except Exception as e:
             logging.exception(e)
             return None
+        logging.warning('----------------------------------------')
+        logging.warning(channel_id)
+        logging.warning(date)
         for event in schedule.iter('event'):
             op = event.get('op')
             event_id = event.get('id')
+            logging.warning(et.tostring(event))
             if op == 'add':
                 child_schedule = old_schedule.find(
                     ".//schedule[@date='%s']" % date)
