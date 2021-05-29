@@ -12,7 +12,7 @@ from flask import (
 from flask_cors import CORS
 import logging
 from urllib.request import urlopen
-from urllib.parse import urljoin, urlencode, urlparse
+from urllib.parse import urlencode
 import wrapcache
 from pathlib import Path
 import os
@@ -26,7 +26,6 @@ if getattr(sys, 'frozen', False):
 elif __file__:
     cur_path = os.path.dirname(os.path.realpath(__file__))
 log_file_name = str(Path(cur_path) / 'conf' / 'epg.log')
-#log_file_handler = TimedRotatingFileHandler(filename=log_file_name, when="D", interval=1, backupCount=3)
 log_file_handler = RotatingFileHandler(
     filename=log_file_name, maxBytes=10*1024*1024, backupCount=3)
 logging.basicConfig(level=logging.INFO,
@@ -49,9 +48,6 @@ except Exception as e:
 app = Flask('__name__')
 CORS(app)
 SECRET_KEY = 'VYDcCe1s'
-NEW_DATA_SIGN = '1'
-OLD_DATA_SIGN = '0'
-MIN_XML_LENGTH = 200
 schedule_cache_dict = {}
 channel_cache = None
 mutex = threading.Lock()
